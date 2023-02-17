@@ -1,113 +1,87 @@
-import React, { useEffect, useState } from "react";
+import { useState } from "react";
 import { AiOutlinePlus } from "react-icons/ai";
-import { MdDelete } from "react-icons/MD";
-
-const getLocalItems = () => {
-  let list = localStorage.getItem("task");
-
-  if (list) {
-    return JSON.parse(list);
-  } else {
-    return [];
-  }
-};
-
-const getLocalDoneList = () => {
-  let listDone = localStorage.getItem("doneList");
-
-  if (listDone) {
-    return JSON.parse(listDone);
-  } else {
-    return [];
-  }
-};
+import { useDispatch, useSelector } from "react-redux";
+import { closeFormAction, openFormAction } from "./actions/formActions";
+import { querychangeAction } from "./actions/queryChange";
+import { formSelector } from "./Selectors/formSelector";
+import { doneListSelector, querySelector } from "./Selectors/querySelector";
+import { MdDelete } from "react-icons/md";
+import {
+  checkboxClickedAction,
+  doneListCheckboxAction,
+  doneListDeleteAction,
+  todoDeleteAction,
+} from "./actions/saareActions";
 
 const Content = () => {
-  const [showForm, setShowForm] = useState(false);
-  const [text, setText] = useState("");
-  const [task, setTask] = useState(getLocalItems());
-  const [doneList, setDoneList] = useState<any[]>(getLocalDoneList());
+  const [query, setQuery] = useState<string>();
 
-  console.log("doneList", doneList);
+  const dispatch = useDispatch();
 
-  const handleForm = () => {
-    setShowForm(true);
+  const handleFormOpenDispatch = () => {
+    dispatch(openFormAction());
   };
 
-  const handleCancleForm = () => {
-    setShowForm(false);
+  const handleFormCloseDispatch = () => {
+    dispatch(closeFormAction());
   };
 
-  const handleText = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setText(event.target.value);
+  const handleQueryChange = (e: any) => {
+    setQuery(e.target.value);
   };
 
   const handleSubmit = (e: any) => {
     e.preventDefault();
-    setText("");
-    setTask([...task, text]);
+    dispatch(querychangeAction(query));
+    setQuery("");
   };
 
-  useEffect(() => {
-    localStorage.setItem("task", JSON.stringify(task));
-  }, [task]);
-
-  useEffect(() => {
-    localStorage.setItem("doneList", JSON.stringify(doneList));
-  }, [doneList]);
-
-  const handleRemove = (i: number) => {
-    const finalData = task.filter((element: string, index: number) => {
-      return index !== i;
-    });
-    setTask(finalData);
+  const handleDelete = (index: number) => {
+    console.log("index", index);
+    dispatch(todoDeleteAction(index));
   };
 
-  const onHandleTodoChange = (i: number) => {
-    setDoneList([...doneList, task[i]]);
-    handleRemove(i);
+  const handleDoneDelete = (index: number) => {
+    console.log("index", index);
+    dispatch(doneListDeleteAction(index));
   };
 
-  const removeDoneList = (i: number) => {
-    const finalData = doneList.filter((element, index) => {
-      return index !== i;
-    });
-    setDoneList(finalData);
+  const handleCheckbox = (index: number) => {
+    console.log("index", index);
+    dispatch(checkboxClickedAction(index));
+    dispatch(todoDeleteAction(index));
   };
 
-  const onHandleDoneListChange = (i: number) => {
-    setTask([...task, doneList[i]]);
-    removeDoneList(i);
+  const handledoneListCheckbox = (index: number) => {
+    dispatch(doneListCheckboxAction(index));
+    dispatch(doneListDeleteAction(index));
   };
-
-  console.log("task", task);
+  const formSelect = useSelector(formSelector);
+  const querySelect = useSelector(querySelector);
+  const doneListSelect = useSelector(doneListSelector);
 
   return (
     <div className="p-8">
       <h1 className="text-3xl font-bold">Things to get done</h1>
       <h3 className="mt-10 text-xl font-semibold">Things to do</h3>
       <div className="mt-3 ">
-        {task.map((value: string, index: number) => {
+        {querySelect.map((value, index: number) => {
           if (value === "") {
             return;
           }
-
           return (
             <div className="flex items-center space-x-2.5">
               <input
                 onClick={() => {
-                  onHandleTodoChange(index);
+                  handleCheckbox(index);
                 }}
                 type="checkbox"
               />
               <div className="text-base font-semibold text-gray-700">
                 {value}
               </div>
-
               <MdDelete
-                onClick={() => {
-                  handleRemove(index);
-                }}
+                onClick={() => handleDelete(index)}
                 className="text-2xl text-red-500 cursor-pointer"
               />
             </div>
@@ -115,7 +89,7 @@ const Content = () => {
         })}
       </div>
       <button
-        onClick={handleForm}
+        onClick={handleFormOpenDispatch}
         className="flex items-center justify-center gap-1 px-5 py-2 mt-5 text-white bg-blue-500 rounded-full"
       >
         {" "}
@@ -128,14 +102,14 @@ const Content = () => {
       <form
         onSubmit={handleSubmit}
         className={
-          showForm === false
+          formSelect === false
             ? "hidden"
             : "p-6 mt-5 space-y-4 border border-gray-100 rounded-md shadow-sm"
         }
       >
         <h3 className="text-lg font-medium">Write your todo</h3>
         <input
-          onChange={handleText}
+          onChange={handleQueryChange}
           required
           type="text"
           placeholder="Write your todo here"
@@ -149,8 +123,8 @@ const Content = () => {
             Save
           </button>
           <button
+            onClick={handleFormCloseDispatch}
             type="button"
-            onClick={handleCancleForm}
             className="px-4 py-1.5 ml-3 font-medium border border-gray-300 rounded-md"
           >
             Cancel
@@ -159,17 +133,14 @@ const Content = () => {
       </form>
       <h3 className="mt-4 text-xl font-semibold">Things done</h3>
       <div className="mt-3 ">
-        {doneList.map((value, index) => {
-          if (value === "") {
-            return;
-          }
+        {doneListSelect.map((value, index) => {
           return (
             <div className="flex items-center space-x-2.5">
               <input
                 onClick={() => {
-                  onHandleDoneListChange(index);
+                  handledoneListCheckbox(index);
                 }}
-                checked
+                checked={true}
                 type="checkbox"
               />
               <div className="text-base font-semibold text-gray-700">
@@ -177,9 +148,7 @@ const Content = () => {
               </div>
 
               <MdDelete
-                onClick={() => {
-                  removeDoneList(index);
-                }}
+                onClick={() => handleDoneDelete(index)}
                 className="text-2xl text-red-500 cursor-pointer"
               />
             </div>
