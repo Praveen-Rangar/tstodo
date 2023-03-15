@@ -1,7 +1,10 @@
+import { collection, getDocs } from "firebase/firestore";
 import produce from "immer";
+import { useEffect } from "react";
 import { Action } from "../actions";
 import {
   EDITED_TODO_CHANGE_AC,
+  FIREBASE_TODO_AC,
   QUERY_CHANGE_ACTION,
   QUERY_CHANGE_ACTION_ARR,
   TODO_FILTERING_AC,
@@ -12,11 +15,20 @@ import {
   DONE_LIST_DELETE_ACTION,
   TODO_DELETE_ACTION,
 } from "../actions/saareActions";
+import { db } from "../firebase";
 
 export type State = {
   todos: {
     [id: number]: {
       id: number;
+      query: string;
+      priority: string;
+      due_date: string;
+    };
+  };
+  firebaseTodo: {
+    [id: string]: {
+      id: string;
       query: string;
       priority: string;
       due_date: string;
@@ -34,6 +46,7 @@ export const initialState: State = {
   doneQuery: [],
   filteredSelect: "",
   filteredDate: "",
+  firebaseTodo: {},
 };
 
 function queryChangeReducer(state = initialState, action: Action): State {
@@ -51,6 +64,14 @@ function queryChangeReducer(state = initialState, action: Action): State {
     case EDITED_TODO_CHANGE_AC:
       return produce(state, (draft) => {
         draft.todos = { ...draft.todos, [action.payload.id]: action.payload };
+      });
+
+    case FIREBASE_TODO_AC:
+      return produce(state, (draft) => {
+        draft.firebaseTodo = {
+          ...draft.firebaseTodo,
+          [action.payload.id]: action.payload,
+        };
       });
 
     case TODO_FILTERING_AC:

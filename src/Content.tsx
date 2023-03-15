@@ -5,6 +5,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { closeFormAction, openFormAction } from "./actions/formActions";
 import {
   EditedTodoChangeAction,
+  fireBaseTodoAction,
   querychangeAction,
   querychangeActionArr,
   todosFilteringAction,
@@ -19,6 +20,8 @@ import {
   todoDeleteAction,
 } from "./actions/saareActions";
 import SettingDropdown from "./SettingDropdown";
+import { db } from "./firebase";
+import { collection, addDoc, getDocs } from "firebase/firestore";
 
 const Content = (props: any) => {
   const [query, setQuery] = useState<string>();
@@ -33,18 +36,29 @@ const Content = (props: any) => {
   const [todoForm, setTodoForm] = useState(false);
   const [editedId, setEditedId] = useState(0);
   const [multiInput, setMultiInput] = useState<number[]>([]);
-  console.log("multiInputQuery", multiInputQuery);
+  const [callApi, setCallApi] = useState(0);
 
   let todoId: number = Math.random();
 
   const dispatch = useDispatch();
 
-  // useEffect(() => {
-  //   const localItems = getLocalItems();
-  //   localItems.map((li: string) => {
-  //     dispatch(querychangeAction(li));
-  //   });
-  // }, [query]);
+  const fetchpost = async () => {
+    await getDocs(collection(db, "todos")).then((querySnapShot) => {
+      const newData = querySnapShot.docs.map((doc) => ({
+        ...doc.data(),
+        id: doc.id,
+      }));
+      newData.map((data) =>
+        dispatch(
+          fireBaseTodoAction(data.id, data.date, data.query, data.select)
+        )
+      );
+    });
+  };
+
+  useEffect(() => {
+    fetchpost();
+  }, [callApi]);
 
   const handleFormOpenDispatch = () => {
     dispatch(openFormAction());
@@ -58,10 +72,15 @@ const Content = (props: any) => {
     setQuery(e.target.value);
   };
 
-  const handleSubmit = (e: any) => {
+  const handleSubmit = async (e: any) => {
     e.preventDefault();
-
+    setCallApi(callApi + 1);
     dispatch(querychangeAction(todoId, query, select, date));
+    await addDoc(collection(db, "todos"), {
+      query,
+      select,
+      date,
+    });
     setQuery("");
   };
 
@@ -133,7 +152,7 @@ const Content = (props: any) => {
   return (
     <div className="p-8 flex justify-between ">
       <div className="">
-        <h1 className="text-3xl font-bold">Things to get done</h1>
+        <h1 className="text-3xl font-bold">Things to get done </h1>
         <div className="flex  items-center space-x-5 ">
           <h3 className="mt-10 text-xl font-semibold">Things to do</h3>
           <div className="mt-10">

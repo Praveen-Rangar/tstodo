@@ -35,6 +35,23 @@ export const EditedTodoChangeAction: ActionCreater<{
   },
 });
 
+export const FIREBASE_TODO_AC = "FIREBASE_TODO_AC";
+
+export const fireBaseTodoAction: ActionCreater<{
+  date: string;
+  id: string;
+  query: string;
+  select: string;
+}> = (id: string, date: string, query: string, select: string) => ({
+  type: FIREBASE_TODO_AC,
+  payload: {
+    id,
+    date,
+    query,
+    select,
+  },
+});
+
 export const querychangeActionArr: ActionCreater<String[]> = (
   query: string[]
 ) => ({
