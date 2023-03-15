@@ -45,7 +45,9 @@ const Content = (props: any) => {
   const fetchpost = async () => {
     await getDocs(collection(db, "todos")).then((querySnapShot) => {
       const newData = querySnapShot.docs.map((doc) => ({
-        ...doc.data(),
+        date: doc.data().date,
+        query: doc.data().query,
+        select: doc.data().select,
         id: doc.id,
       }));
       newData.map((data) =>
