@@ -1,6 +1,11 @@
 import produce from "immer";
 import { Action } from "../actions";
-import { QUERY_CHANGE_ACTION } from "../actions/queryChange";
+import {
+  EDITED_TODO_CHANGE_AC,
+  QUERY_CHANGE_ACTION,
+  QUERY_CHANGE_ACTION_ARR,
+  TODO_FILTERING_AC,
+} from "../actions/queryChange";
 import {
   CHECKBOX_CLICKED_ACTION,
   DONE_LIST_CHECKBOX,
@@ -9,47 +14,86 @@ import {
 } from "../actions/saareActions";
 
 export type State = {
-  query: string[];
+  todos: {
+    [id: number]: {
+      id: number;
+      query: string;
+      priority: string;
+      due_date: string;
+    };
+  };
   index: number;
   doneQuery: string[];
+  filteredSelect: string;
+  filteredDate: string;
 };
 
 export const initialState: State = {
-  query: [],
+  todos: {},
   index: 0,
   doneQuery: [],
+  filteredSelect: "",
+  filteredDate: "",
 };
 
 function queryChangeReducer(state = initialState, action: Action): State {
   switch (action.type) {
     case QUERY_CHANGE_ACTION:
       return produce(state, (draft) => {
-        draft.query = [...draft.query, action.payload];
+        const { id } = action.payload;
+        console.log("payload", action.payload);
+
+        draft.todos = { ...draft.todos, [id]: action.payload };
+        //localStorage.setItem("query", JSON.stringify([...draft.todos]));
+        console.log("query", draft.todos);
       });
 
-    case TODO_DELETE_ACTION:
+    case EDITED_TODO_CHANGE_AC:
       return produce(state, (draft) => {
-        draft.query = draft.query.filter((element, i) => {
-          return i !== action.payload;
-        });
+        draft.todos = { ...draft.todos, [action.payload.id]: action.payload };
       });
 
-    case CHECKBOX_CLICKED_ACTION:
+    case TODO_FILTERING_AC:
       return produce(state, (draft) => {
-        draft.doneQuery = [...draft.doneQuery, draft.query[action.payload]];
+        console.log(
+          "action.payload.filteredSelect",
+          action.payload.filteredSelect
+        );
+        console.log("action.payload.filtereddate", action.payload.filteredDate);
+
+        draft.filteredSelect = action.payload.filteredSelect;
+        draft.filteredDate = action.payload.filteredDate;
       });
 
-    case DONE_LIST_DELETE_ACTION:
-      return produce(state, (draft) => {
-        draft.doneQuery = draft.doneQuery.filter((element, i) => {
-          return i !== action.payload;
-        });
-      });
+    // case QUERY_CHANGE_ACTION_ARR:
+    //   return produce(state, (draft) => {
+    //     draft.query = [...action.payload];
+    //     localStorage.setItem("query", JSON.stringify([...draft.query]));
+    //   });
 
-    case DONE_LIST_CHECKBOX:
-      return produce(state, (draft) => {
-        draft.query = [...draft.query, draft.doneQuery[action.payload]];
-      });
+    // case TODO_DELETE_ACTION:
+    //   return produce(state, (draft) => {
+    //     draft.query = draft.query.filter((element, i) => i !== action.payload);
+    //     localStorage.setItem("query", JSON.stringify([...draft.query]));
+    //   });
+
+    // case CHECKBOX_CLICKED_ACTION:
+    //   return produce(state, (draft) => {
+    //     draft.doneQuery = [...draft.doneQuery, draft.query[action.payload]];
+    //     localStorage.setItem("query", JSON.stringify([...draft.doneQuery]));
+    //   });
+
+    // case DONE_LIST_DELETE_ACTION:
+    //   return produce(state, (draft) => {
+    //     draft.doneQuery = draft.doneQuery.filter((element, i) => {
+    //       return i !== action.payload;
+    //     });
+    //   });
+
+    // case DONE_LIST_CHECKBOX:
+    //   return produce(state, (draft) => {
+    //     draft.query = [...draft.query, draft.doneQuery[action.payload]];
+    //   });
 
     default:
       return state;
